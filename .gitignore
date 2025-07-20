@@ -1,0 +1,54 @@
+# Build results
+bin/
+obj/
+out/
+publish/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code settings
+.vscode/
+
+# Visual Studio files
+.vs/
+
+# IIS/IISExpress
+*.vspscc
+*.vssscc
+*.dbmdl
+*.pdb
+*.cache
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# EF Core migrations snapshots
+Migrations/*Snapshot.cs
+
+# SQLite database files
+*.db
+*.sqlite
+
+# Dotnet tools
+tools/
+
+# Rider
+.idea/
+
+# Test results
+TestResults/
+*.coverage
+*.coveragexml
+
+# Others
+*.swp
+*.bak
+*.tmp
+
+# Ignore
