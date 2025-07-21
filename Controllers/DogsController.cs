@@ -1,8 +1,6 @@
-﻿using DogsWorld.Data;
-using DogsWorld.Logger;
+﻿using DogsWorld.Logger;
 using DogsWorld.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,43 +12,53 @@ namespace DogsWorld.Controllers
     [ApiController]
     public class DogsController : ControllerBase
     {
-        private readonly DogsWorldContext _context;
-
-        public DogsController(DogsWorldContext context)
+        // Mock data (in-memory list)
+        private static List<Dog> _dogs = new List<Dog>
         {
-            _context = context;
+            new Dog { Id = 1, Name = "Rex", Breed = "Labrador", Age = 5, BirthDate = DateTime.Now.AddYears(-5), HasOwner = true },
+            new Dog { Id = 2, Name = "Max", Breed = "Poodle", Age = 3, BirthDate = DateTime.Now.AddYears(-3), HasOwner = false },
+            new Dog { Id = 3, Name = "Bella", Breed = "Bulldog", Age = 2, BirthDate = DateTime.Now.AddYears(-2), HasOwner = true }
+        };
+
+        [HttpGet("connectionstring")]
+        public ActionResult<string> GetConnectionString()
+        {
+            return "Mocked connection string";
         }
 
         // GET: api/Dogs
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Dog>>> GetDog()
         {
-            return await _context.Dog.ToListAsync();
+            return await Task.FromResult(_dogs);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Dog>> GetDog(int id)
         {
-            var dog = await _context.Dog.FindAsync(id);
+            var dog = _dogs.FirstOrDefault(d => d.Id == id);
 
-            // log username
-            DatadogLogger.AddTag("username", "eminsalim");
-
-            // log unique identifier
-            Guid identifier = Guid.NewGuid();
-            DatadogLogger.AddTag("dog_request_id", identifier.ToString());
+            // Só logue se houver escopo ativo do Datadog
+            try
+            {
+                DatadogLogger.AddTag("username", "eminsalim");
+                Guid identifier = Guid.NewGuid();
+                DatadogLogger.AddTag("dog_request_id", identifier.ToString());
+            }
+            catch (NullReferenceException)
+            {
+                // Ignora se não houver escopo ativo
+            }
 
             if (dog == null)
             {
                 return NotFound();
             }
 
-            return dog;
+            return await Task.FromResult(dog);
         }
 
         // PUT: api/Dogs/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
         public async Task<IActionResult> PutDog(int id, Dog dog)
         {
@@ -59,57 +67,44 @@ namespace DogsWorld.Controllers
                 return BadRequest();
             }
 
-            _context.Entry(dog).State = EntityState.Modified;
-
-            try
+            var existingDog = _dogs.FirstOrDefault(d => d.Id == id);
+            if (existingDog == null)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!DogExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound();
             }
 
-            return NoContent();
+            existingDog.Name = dog.Name;
+            existingDog.Breed = dog.Breed;
+            existingDog.Age = dog.Age;
+            existingDog.BirthDate = dog.BirthDate;
+            existingDog.HasOwner = dog.HasOwner;
+
+            return await Task.FromResult(NoContent());
         }
 
         // POST: api/Dogs
-        // To protect from overposting attacks, enable the specific properties you want to bind to, for
-        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPost]
         public async Task<ActionResult<Dog>> PostDog(Dog dog)
         {
-            _context.Dog.Add(dog);
-            await _context.SaveChangesAsync();
+            dog.Id = _dogs.Any() ? _dogs.Max(d => d.Id) + 1 : 1;
+            _dogs.Add(dog);
 
-            return CreatedAtAction("GetDog", new { id = dog.Id }, dog);
+            return await Task.FromResult(CreatedAtAction("GetDog", new { id = dog.Id }, dog));
         }
 
         // DELETE: api/Dogs/5
         [HttpDelete("{id}")]
         public async Task<ActionResult<Dog>> DeleteDog(int id)
         {
-            var dog = await _context.Dog.FindAsync(id);
+            var dog = _dogs.FirstOrDefault(d => d.Id == id);
             if (dog == null)
             {
                 return NotFound();
             }
 
-            _context.Dog.Remove(dog);
-            await _context.SaveChangesAsync();
+            _dogs.Remove(dog);
 
-            return dog;
-        }
-        private bool DogExists(int id)
-        {
-            return _context.Dog.Any(e => e.Id == id);
+            return await Task.FromResult(dog);
         }
     }
 }

@@ -1,7 +1,5 @@
-﻿using DogsWorld.Data;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -21,10 +19,16 @@ namespace DogsWorld
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // var connStr = Configuration.GetConnectionString("DogsWorldContext");
+            // Console.WriteLine($"String de conexão usada: {connStr}");
+
             services.AddControllers();
 
-            services.AddDbContext<DogsWorldContext>(options =>
-                options.UseSqlite(Configuration.GetConnectionString("DogsWorldContext")));
+            // services.AddDbContext<DogsWorldContext>(options =>
+            //     options.UseSqlite(Configuration.GetConnectionString("DogsWorldContext")));
+
+            // services.AddDbContext<DogsWorldContext>(options =>
+            //     options.UseSqlite(connStr));
 
             services.AddSwaggerGen(c =>
             {
